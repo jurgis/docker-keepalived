@@ -13,11 +13,25 @@
 
 
 # definign variables
-CONFIG_DIR=/etc/keepalived
-TEMPLATES_DIR=${CONFIG_DIR}/templates
-CONFIG_FILE=${CONFIG_DIR}/keepalived.conf
-CONFIG_TEMPLATE_FILE=${TEMPLATE_DIR}/keepalived.conf
+KEEPALIVED_DIR="/etc/keepalived"
+TEMPLATES_DIR="$KEEPALIVED_DIR/templates"
+CONFIG_FILE="$KEEPALIVED_DIR/keepalived.conf"
+CONFIG_TEMPLATE_FILE="$TEMPLATES_DIR/keepalived.conf"
+CONFIG_DIR="$KEEPALIVED_DIR/config"
+PASSWORD_CONFIG_FILE="$CONFIG_DIR/password"
+UNICAST_PEERS_CONFIG_FILE="$CONFIG_DIR/unicast_peers"
+VIRTUAL_IP_CONFIG_FILE="$CONFIG_DIR/virtual_ip"
 
+echo "========== VARIABLES =========="
+echo "KEEPALIVED_DIR: $KEEPALIVED_DIR"
+echo "TEMPLATES_DIR: $TEMPLATES_DIR"
+echo "CONFIG_FILE: $CONFIG_FILE"
+echo "CONFIG_TEMPLATE_FILE: $CONFIG_TEMPLATE_FILE"
+echo "CONFIG_DIR: $CONFIG_DIR"
+echo "PASSWORD_CONFIG_FILE: $PASSWORD_CONFIG_FILE"
+echo "UNICAST_PEERS_CONFIG_FILE: $UNICAST_PEERS_CONFIG_FILE"
+echo "VIRTUAL_IP_CONFIG_FILE: $VIRTUAL_IP_CONFIG_FILE"
+echo "==============================="
 
 # Call stop() function when termination is required
 trap "stop; exit 0;" SIGTERM SIGINT
@@ -42,14 +56,14 @@ stop()
 pkill keepalived
 
 # wait for the config file template (added as ConfigMap in kubernetes)
-while [ ! -f "${CONFIG_TEMPLATE_FILE}" ]; do
-  echo "Configuration template file not found at: ${CONFIG_TEMPLATE_FILE}"
+while [ ! -f "$CONFIG_TEMPLATE_FILE" ]; do
+  echo "Configuration template file not found at: $CONFIG_TEMPLATE_FILE"
   echo "Waiting for 10 seconds"
   sleep 10
 done
 
 # Configuration template file found, copy it and replace some variables
-cp ${CONFIG_TEMPLATE_FILE} ${CONFIG_FILE}
+cp $CONFIG_TEMPLATE_FILE $CONFIG_FILE
 
 # Set node priority based on env variable
 if [ -z "$NODE_PRIORITY" ]; then
@@ -57,13 +71,38 @@ if [ -z "$NODE_PRIORITY" ]; then
 fi
 
 echo "Setting priority to: $NODE_PRIORITY"
-sed -i "s/{{NODE_PRIORITY}}/${NODE_PRIORITY}/" ${CONFIG_FILE}
+sed -i "s/{{NODE_PRIORITY}}/$NODE_PRIORITY/" $CONFIG_FILE
 
 ROUTER_ID=$(hostname)
 echo "Setting Router ID to: $ROUTER_ID"
-sed -i "s/{{ROUTER_ID}}/${ROUTER_ID}/" ${CONFIG_FILE}
+sed -i "s/{{ROUTER_ID}}/$ROUTER_ID/" $CONFIG_FILE
 
-### TODO: Substitute UNICAST_PEERS
+# Set password
+PASSWORD="UNDEFINED"
+if [ -f "$PASSWORD_CONFIG_FILE" ]; then
+  PASSWORD=$(cat $PASSWORD_CONFIG_FILE)
+fi
+echo "Setting password to: $PASSWORD"
+sed -i "s/{{PASSWORD}}/$PASSWORD/" $CONFIG_FILE
+
+### TODO: Get unitcast peers from DNS entries
+# Set unicast peers (from statical configuration for now)
+UNICAST_PEERS="UNDEFINED"
+if [ -f "$UNICAST_PEERS_CONFIG_FILE" ]; then
+  UNICAST_PEERS=$(cat $UNICAST_PEERS_CONFIG_FILE)
+fi
+echo "Setting unicast peers to: $UNICAST_PEERS"
+# sed can't handle multiline values or I did not find how to do it
+# sed -i "s/{{UNICAST_PEERS}}/$UNICAST_PEERS/" $CONFIG_FILE
+perl -pi -e "s/\{\{UNICAST_PEERS\}\}/$UNICAST_PEERS/" $CONFIG_FILE
+
+# Set virtual ip address
+VIRTUAL_IP="UNDEFINED"
+if [ -f "$VIRTUAL_IP_CONFIG_FILE" ]; then
+  VIRTUAL_IP=$(cat $VIRTUAL_IP_CONFIG_FILE)
+fi
+echo "Setting virtual ip address to: $VIRTUAL_IP"
+sed -i "s/{{VIRTUAL_IP}}/$VIRTUAL_IP/" $CONFIG_FILE
 
 
 # This loop runs till until we've started up successfully
