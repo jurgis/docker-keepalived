@@ -11,10 +11,20 @@ RUN apt-get update \
  && ./configure \
  && make \
  && make install \
- && apt-get remove build-essential libssl-dev -y \
+ && apt-get remove build-essential libssl-dev -y
+
+RUN apt-get install -y jq dnsutils vim \
  && apt-get autoremove -y \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/log/apt
+
+RUN mkdir -p /etc/keepalived/templates \
+ && mkdir /etc/keepalived/config
+
+VOLUME /etc/keepalived
+
+RUN groupadd --gid 1000 keepalived_script \
+ && useradd --no-create-home --uid 1000 --gid 1000 --shell /bin/bash keepalived_script
 
 COPY startup.sh /usr/local/bin/startup.sh
 
