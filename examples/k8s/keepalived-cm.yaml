@@ -4,6 +4,7 @@ kind: ConfigMap
 metadata:
   name: keepalived-conf
 data:
+  password: "password" # TODO: Move it to kubernetes secrets
   virtual_ip: 192.168.1.254
   unicast_peers_service_name: keepalived-vip.kube-system.svc.cluster.local
   check_script: /etc/keepalived/scripts/default_check_script.sh
@@ -22,7 +23,7 @@ data:
       fall 2
       rise 2
     }
-    vrrp_instance k8s-vips {
+    vrrp_instance k8s-vip {
       state BACKUP
       interface eth0
       virtual_router_id 18
