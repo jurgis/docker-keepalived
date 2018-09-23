@@ -1,0 +1,49 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keepalived-conf
+data:
+  virtual_ip: 192.168.1.254
+  unicast_peers_service_name: keepalived-vip.kube-system.svc.cluster.local
+  check_script: /etc/keepalived/scripts/default_check_script.sh
+  notify_script: /etc/keepalived/scripts/default_notify_script.sh
+  unicast_peers_script: /etc/keepalived/scripts/default_unicast_peers_script.sh
+  keepalived.conf: |-
+    global_defs {
+      router_id {{ROUTER_ID}}
+      vrrp_garp_master_delay 1
+      vrrp_garp_master_refresh 30
+    }
+    vrrp_script check_script {
+      script "{{CHECK_SCRIPT}}"
+      timeout 3
+      interval 2
+      fall 2
+      rise 2
+    }
+    vrrp_instance k8s-vips {
+      state BACKUP
+      interface eth0
+      virtual_router_id 18
+      priority {{NODE_PRIORITY}}
+      advert_int 1
+      nopreempt
+      dont_track_primary
+
+      track_script {
+        check_script
+      }
+      authentication {
+        auth_type PASS
+        auth_pass {{PASSWORD}}
+      }
+      virtual_ipaddress {
+        {{VIRTUAL_IP}} dev eth0
+      }
+      unicast_peer {
+        {{UNICAST_PEERS}}
+      }
+      notify "{{NOTIFY_SCRIPT}}"
+    }
+

@@ -12,7 +12,7 @@ $ docker build . -t jurgis/keepalived
 
 ## Run locally for testing purpose
 ```
-$ docker run -it --rm -v $PWD/examples/templates:/etc/keepalived/templates -v $PWD/examples/config:/etc/keepalived/config jurgis/keepalived /bin/bash
+docker run -it --rm -v $PWD/examples/templates:/etc/keepalived/templates -v $PWD/examples/config:/etc/keepalived/config -v $PWD/examples/scripts:/etc/keepalived/scripts jurgis/keepalived
 ```
 
 ## TODO

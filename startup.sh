@@ -13,14 +13,32 @@
 
 
 # definign variables
+# Directories
 KEEPALIVED_DIR="/etc/keepalived"
 TEMPLATES_DIR="$KEEPALIVED_DIR/templates"
+SCRIPTS_DIR="$KEEPALIVED_DIR/scripts"
+CONFIG_DIR="$KEEPALIVED_DIR/config"
+
+# Files
 CONFIG_FILE="$KEEPALIVED_DIR/keepalived.conf"
 CONFIG_TEMPLATE_FILE="$TEMPLATES_DIR/keepalived.conf"
-CONFIG_DIR="$KEEPALIVED_DIR/config"
+
+# Configuration in files
 PASSWORD_CONFIG_FILE="$CONFIG_DIR/password"
 UNICAST_PEERS_CONFIG_FILE="$CONFIG_DIR/unicast_peers"
 VIRTUAL_IP_CONFIG_FILE="$CONFIG_DIR/virtual_ip"
+UNICAST_PEERS_SERVICE_NAME_CONFIG_FILE="$CONFIG_DIR/unicast_peers_service_name"
+CHECK_SCRIPT_CONFIG_FILE="$CONFIG_DIR/check_script"
+NOTIFY_SCRIPT_CONFIG_FILE="$CONFIG_DIR/notify_script"
+UNICAST_PEERS_SCRIPT_CONFIG_FILE="$CONFIG_DIR/unicast_peers_script"
+
+# Script files
+CHECK_SCRIPT_FILE="$(cat $CHECK_SCRIPT_CONFIG_FILE)"
+NOTIFY_SCRIPT_FILE="$(cat $NOTIFY_SCRIPT_CONFIG_FILE)"
+UNICAST_PEERS_SCRIPT_FILE="$(cat $UNICAST_PEERS_SCRIPT_CONFIG_FILE)"
+
+# TODO: Add default values
+
 
 echo "========== VARIABLES =========="
 echo "KEEPALIVED_DIR: $KEEPALIVED_DIR"
@@ -30,6 +48,7 @@ echo "CONFIG_TEMPLATE_FILE: $CONFIG_TEMPLATE_FILE"
 echo "CONFIG_DIR: $CONFIG_DIR"
 echo "PASSWORD_CONFIG_FILE: $PASSWORD_CONFIG_FILE"
 echo "UNICAST_PEERS_CONFIG_FILE: $UNICAST_PEERS_CONFIG_FILE"
+echo "UNICAST_PEERS_SCRIPT: $UNICAST_PEERS_SCRIPT"
 echo "VIRTUAL_IP_CONFIG_FILE: $VIRTUAL_IP_CONFIG_FILE"
 echo "==============================="
 
@@ -85,12 +104,20 @@ fi
 echo "Setting password to: $PASSWORD"
 sed -i "s/{{PASSWORD}}/$PASSWORD/" $CONFIG_FILE
 
-### TODO: Get unitcast peers from DNS entries
-# Set unicast peers (from statical configuration for now)
+# Set unicast peers from static configuration
 UNICAST_PEERS="UNDEFINED"
 if [ -f "$UNICAST_PEERS_CONFIG_FILE" ]; then
   UNICAST_PEERS=$(cat $UNICAST_PEERS_CONFIG_FILE)
 fi
+
+# Override static configuration if script returns anything
+if [ -f "$UNICAST_PEERS_SCRIPT" ]; then
+  UNICAST_PEERS2=$(UNICAST_PEERS_SCRIPT)
+  if [ -n "$UNICAST_PEERS2" ]; then
+    UNICAST_PEERS=$UNICAST_PEERS2
+  fi
+fi
+
 echo "Setting unicast peers to: $UNICAST_PEERS"
 # sed can't handle multiline values or I did not find how to do it
 # sed -i "s/{{UNICAST_PEERS}}/$UNICAST_PEERS/" $CONFIG_FILE
@@ -105,11 +132,12 @@ echo "Setting virtual ip address to: $VIRTUAL_IP"
 sed -i "s/{{VIRTUAL_IP}}/$VIRTUAL_IP/" $CONFIG_FILE
 
 
-# This loop runs till until we've started up successfully
+# This loop runs until we've started up successfully
 while true; do
 
   # Check if Keepalived is running by recording it's PID (if it's not running $pid will be null):
   pid=$(pidof keepalived)
+  echo "Checking keepalived pid: $pid"
 
   # If $pid is null, do this to start or restart Keepalived:
   while [ -z "$pid" ]; do
@@ -119,8 +147,12 @@ while true; do
     echo "Starting Keepalived in the background..."
     /usr/local/sbin/keepalived --dont-fork --dump-conf --log-console --log-detail --vrrp &
     
+    # Sleep for 2 seconds
+    sleep 2
+    
     # Check if Keepalived is now running by recording it's PID (if it's not running $pid will be null):
     pid=$(pidof keepalived)
+    echo "Checking keepalived pid2: $pid"
 
     # If $pid is null, startup failed; log the fact and sleep for 2s
     # We'll then automatically loop through and try again
@@ -138,6 +170,8 @@ done
 ### TODO: Run another loop and reload configuration if it has changed
 
 # Wait until the Keepalived processes stop (for some reason)
+echo "Waiting for process with pid $pid to terminate..."
+
 wait $pid
 echo "The Keepalived process is no longer running, exiting..."
 # Exit with an error
