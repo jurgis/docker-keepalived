@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: keepalived-vip
+spec:
+  template:
+    metadata:
+      labels:
+        app: keepalived-vip
+    spec:
+      nodeSelector:
+        run-ingress: "true"
+      containers:
+        - name: keepalived
+          image: jurgis/keepalived:2.0.7.3
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/keepalived/config/
+      hostNetwork: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: keepalived-conf
+
