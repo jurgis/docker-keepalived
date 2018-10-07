@@ -18,13 +18,14 @@
 KEEPALIVED_DIR="/etc/keepalived"
 SCRIPTS_DIR="$KEEPALIVED_DIR/scripts"
 CONFIG_DIR="$KEEPALIVED_DIR/config"
+SECRETS_DIR="$KEEPALIVED_DIR/secrets"
 
 # Files
 CONFIG_FILE="$KEEPALIVED_DIR/keepalived.conf"
 CONFIG_TEMPLATE_FILE="$CONFIG_DIR/keepalived.conf"
 
 # Configuration in files
-PASSWORD_CONFIG_FILE="$CONFIG_DIR/password"
+PASSWORD_CONFIG_FILE="$SECRETS_DIR/keepalived-password"
 UNICAST_PEERS_CONFIG_FILE="$CONFIG_DIR/unicast_peers"
 VIRTUAL_IP_CONFIG_FILE="$CONFIG_DIR/virtual_ip"
 UNICAST_PEERS_SERVICE_NAME_CONFIG_FILE="$CONFIG_DIR/unicast_peers_service_name"
