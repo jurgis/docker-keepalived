@@ -31,4 +31,3 @@ case $STATE in
 esac
 
 exit 0
-
