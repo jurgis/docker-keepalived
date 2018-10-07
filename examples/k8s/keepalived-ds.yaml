@@ -15,7 +15,7 @@ spec:
         run-ingress: "true"
       containers:
         - name: keepalived
-          image: jurgis/keepalived:2.0.7.6
+          image: jurgis/keepalived:2.0.7.7
           securityContext:
             privileged: true
           volumeMounts:
