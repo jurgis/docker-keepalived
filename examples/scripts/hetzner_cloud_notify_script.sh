@@ -7,7 +7,7 @@ TYPE=$1
 NAME=$2
 
 # Set to the end state of the transition: BACKUP, FAULT, or MASTER.
-STATE=${3:-MASTER} # TODO: Remove when testing completed
+STATE=$3
 
 echo "HETZNER_CLOUD_NOTIFY_SCRIPT: VRRP $TYPE $NAME changed to state $STATE"
 
@@ -17,8 +17,7 @@ if [ "$STATE" != "MASTER" ]; then
 fi
 
 API_BASE_URL="https://api.hetzner.cloud/v1"
-# \s and \S do not work correctly on Mac (or I was doing something wrong)
-API_TOKEN=$(cat ~/.config/hcloud/cli.toml | grep token | sed -E 's/^[ ]+token = "([^ ]+)"$/\1/')
+API_TOKEN=$(cat /etc/keepalived/secrets/hetzner-cloud-api-key)
 API_AUTH_HEADER="Authorization: Bearer $API_TOKEN"
 HOSTNAME=$(hostname)
 FLOATING_IP=$(cat /etc/keepalived/config/virtual_ip)
