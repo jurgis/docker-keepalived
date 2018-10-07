@@ -19,7 +19,7 @@ docker run -it --rm -v $PWD/examples/config:/etc/keepalived/config -v $PWD/examp
 ## TODO
 - [ ] Improve examples/scripts/default_unicast_peers_script.sh to retry if error is returned by dig command (happens when node is restarted)
 - [ ] Add examples/scripts/hetzner_cloud_notify_script.sh which will switch floating IP in hetzner cloud
-- [ ] Use kubernetes secret for keepalived password and access token for ip switching
+- [x] Use kubernetes secret for keepalived password and access token for ip switching
 - [ ] Decrease ubuntu based image size
 - [ ] Set up build pipeline in hub.docker.com (currently I'm pushing manually to https://hub.docker.com/r/jurgis/keepalived/tags/)
 - [ ] Switch to alpine linux if possible (to reduce container size)
