@@ -13,7 +13,7 @@ $ docker push jurgis/keepalived
 
 ## Run locally for testing purpose
 ```
-docker run -it --rm -v $PWD/examples/config:/etc/keepalived/config jurgis/keepalived
+docker run -it --rm -v $PWD/examples/config:/etc/keepalived/config -v $PWD/examples/secrets:etc/keepalived/secrets jurgis/keepalived
 ```
 
 ## TODO
